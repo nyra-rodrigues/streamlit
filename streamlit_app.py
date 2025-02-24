@@ -4,164 +4,204 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import ast
 
-# Load your dataset (ensure it's preloaded in your session, or load it dynamically)
-# Example: 
-combined_df_2025 = pd.read_csv('amplitude_export_chunk_1_anonymized_subchunk_200000_300000.csv')
-df = pd.read_csv('amplitude_export_chunk_1_anonymized_subchunk_200000_300000.csv')
+st.header("Regional Distribution 2024")
+st.image("r2024.png", caption="User Activity by Region in 2024")
+st.header("Regional Distribution 2025")
+st.image("regiondistr.png", caption="User Activity by Region in 2025")
+st.write("**Insight:** Maharashtra has surpassed Tennessee in user activity, and new regions like Iowa and Georgia are gaining prominence. This shift suggests evolving engagement patterns across different geographic areas.")
 
-# Streamlit Dashboard Title
-st.title('User Behavior and Session Analysis Dashboard')
+st.header("Country Distribution (2025)")
+st.image("c2025.png", caption="User Activity by Country in 2025")
+st.write("**Insight:** The platform remains heavily dominated by users from the **United States and India**, with **Poland seeing a significant increase in activity**. Engagement strategies should prioritize these regions to maximize retention.")
 
-# Section 1: Role Distribution
-st.header("1. Role Distribution")
-combined_df_2025['user_properties'] = combined_df_2025['user_properties'].apply(lambda x: ast.literal_eval(x))
-combined_df_2025['roles'] = combined_df_2025['user_properties'].apply(lambda x: x.get('roles', []))
-roles = combined_df_2025['roles'].explode().value_counts()
+st.header("City Distribution (2025)")
+st.image("ci2025.png", caption="User Activity by City in 2025")
+st.write("**Insight:** **Mumbai and Nashville** remain dominant, with increasing activity in cities like **Spring Hill and Wroclaw**. Targeted engagement strategies in these cities could improve retention and daily usage.")
 
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.barplot(x=roles.index, y=roles.values, ax=ax)
-ax.set_title("Role Distribution")
-ax.set_xlabel("Role")
-ax.set_ylabel("Count")
-plt.xticks(rotation=90)
-st.pyplot(fig)
+st.header("User Role Distribution (2024)")
+st.image("roledistr2024.png", caption="Role-based Engagement Trends in 2025")
+st.header("User Role Distribution (2025)")
+st.image("roledistr2025.png", caption="Role-based Engagement Trends in 2025")
+st.write("""
+**Insight:**  
+- **Underwriters dominate the platform.** Ensuring that platform tools are optimized for their workflow can **improve daily retention**.  
+- **Admins and Internal users have grown significantly**, suggesting the need for **better management and oversight tools**.  
+- **Executives and Leaders are now more engaged.** Adding **high-level insights, reports, and automated dashboards** could further drive engagement.  
+- **UA and FS roles have declined**, possibly indicating **disengagement**. Investigating their usage patterns could help **recover lost users**.
+""")
 
-# Section 2: Session Length Analysis
-st.header("2. Session Length Analysis")
-df['server_received_time'] = pd.to_datetime(df['server_received_time'], errors='coerce')
-df_sessions = df.groupby('session_id')['server_received_time'].agg(['min', 'max'])
-df_sessions['session_length'] = (df_sessions['max'] - df_sessions['min']).dt.total_seconds()
-df = df.merge(df_sessions[['session_length']], left_on='session_id', right_index=True)
+st.header("User Engagement: Session Length Analysis")
+st.image("sessionlen.png", caption="Guest vs. Registered User Session Length")
+st.write("""
+📌 **Insight:**  
+- **Guest users spend ~44% less time on the platform** than registered users.  
+- This suggests **friction in engagement**, possibly due to:
+  - **Lack of onboarding**
+  - **No incentive to register**
+  - **Users passively browsing rather than interacting**
+- **Most sessions end after UI rendering,** instead of meaningful actions like **form submissions or button clicks.**  
+- **To improve engagement:**  
+  - Improve **onboarding for guest users.**  
+  - Add **incentives for registration.**  
+  - **Encourage deeper interactions** (e.g., personalized recommendations, call-to-action prompts).  
+""")
 
-st.subheader("Average Session Length")
-avg_registered = df[df['user_id'] != 'EMPTY']['session_length'].mean()
-avg_guest = df[df['user_id'] == 'EMPTY']['session_length'].mean()
+st.header("User Drop-offs: Session Length Distribution")
+st.image("dropoffdistr.png", caption="Distribution of Session Lengths")
+st.write("""
+**Insight:**  
+- A large portion of users **drop off within the first 30 seconds of their session**.  
+- This suggests that users **aren’t finding value quickly enough** or **are leaving due to UI/UX friction**.  
+- **Short session lengths indicate low engagement**, meaning users may be:
+  - **Not finding what they need immediately**.
+  - **Facing an unintuitive interface**.
+  - **Losing interest before interacting with key features**.
 
-st.write(f"Average session length (registered users): {avg_registered:.2f} seconds")
-st.write(f"Average session length (guest users): {avg_guest:.2f} seconds")
+**How to Improve Engagement:**  
+- Optimize **onboarding experience** to guide users toward valuable actions.  
+- Ensure **important content is visible immediately**—reduce friction in navigation.  
+- Add **clear calls to action (CTAs)** to encourage further engagement (e.g., "Try Feature X Now!").  
+- **Analyze high drop-off pages** to identify problem areas and improve UI/UX.
+""")
 
-# Plot session length distribution
-fig, ax = plt.subplots(figsize=(10, 6))
-df_sessions.groupby(df_sessions.index)['session_length'].mean().sort_values(ascending=True).head(10).plot(kind='bar', ax=ax)
-ax.set_title("Top 10 Session Lengths")
-ax.set_xlabel("Session ID")
-ax.set_ylabel("Session Length (Seconds)")
-st.pyplot(fig)
+st.header("Peak User Activity: Events Per Hour")
+st.image("perhr.png", caption="User Engagement by Hour")
+st.write("""
+**Insight:**  
+- **Peak engagement occurs around 8 PM**, when most events are recorded.  
+- However, **users are primarily browsing (widget:render, view events)** rather than interacting deeply.  
+- **Secondary activity peaks** exist in the late afternoon, but engagement drops significantly after 9 PM.
 
-# Section 3: Time Difference Between Event and Upload
-st.header("3. Time Difference Between Event and Upload")
+**How to Improve Engagement During Peak Hours:**  
+- Implement **calls to action (CTAs) during peak times** to convert passive browsing into meaningful actions.  
+- Optimize **platform performance** to handle increased load at **8 PM**.  
+- Introduce **real-time engagement features (e.g., notifications, prompts, or personalized recommendations)** to encourage deeper interactions.  
+""")
 
-# Calculate time difference
-combined_df_2025['client_event_time'] = pd.to_datetime(combined_df_2025['client_event_time'])
-combined_df_2025['client_upload_time'] = pd.to_datetime(combined_df_2025['client_upload_time'])
-combined_df_2025['time_difference'] = combined_df_2025['client_upload_time'] - combined_df_2025['client_event_time']
-combined_df_2025['time_difference_minutes'] = combined_df_2025['time_difference'].dt.total_seconds() / 60
+st.header("User Engagement by Day of the Week")
+st.image("perweek.png", caption="Platform Activity by Day")
+st.write("""
+**Insight:**  
+- **Tuesday is the peak engagement day**, making it the best time for **feature rollouts, marketing campaigns, and major platform updates**.  
+- **Monday to Thursday see consistently high engagement**, indicating strong usage during the workweek.  
+- **Weekend activity drops significantly**, especially on **Saturday (lowest engagement day)**, suggesting that users primarily interact with the platform for **work-related tasks**.
 
-st.subheader("Time Difference Summary")
-st.write(combined_df_2025['time_difference_minutes'].describe())
+**How to Optimize Engagement Based on This Insight:**  
+- **Schedule important updates, campaigns, and releases on Tuesdays** to maximize visibility and interaction.  
+- **Prioritize workweek engagement strategies**, focusing on Monday-Thursday for key user interactions.  
+- **Reconsider weekend-focused efforts**, as engagement is significantly lower, especially on Saturdays.
+""")
 
-# Filter and visualize upload times > 10 days
-filtered_df_2025 = combined_df_2025[combined_df_2025['time_difference_minutes'] > 14400]
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.countplot(x='country', data=filtered_df_2025, ax=ax)
-ax.set_xlabel('Countries with Upload Time > 10 Days')
-ax.set_ylabel('Frequency')
-ax.set_title('Country Distribution of Upload Time > 10 Days')
-plt.xticks(rotation=45)
-st.pyplot(fig)
+st.header("Session Duration Patterns: Active vs Passive Engagement")
+st.image("avgsessperhr.png", caption="Session Length Trends Throughout the Day")
+st.write("""
+**Insight:**  
+- **Late-night and early-morning session spikes (4 AM, 10-11 PM) suggest passive or automated activity.**  
+- **Morning users (6 AM - 10 AM) engage for structured work tasks but don’t stay logged in for extended periods.**  
+- **Afternoon sessions (12 PM - 4 PM) are shorter, indicating task-based interactions rather than prolonged engagement.**  
+- **Evening sessions (6 PM - 8 PM) show a dip, reinforcing the platform’s work-centric nature.**  
+- The **late-night increase** could be due to **either night-owl users or automated non-human activity (batch processes, data retrieval, etc.).**  
 
-# Section 4: User Drop-offs Between 2024 and 2025
-# Step 1: Filter 2024 dataset to be over 207 days, from the earliest time (April 14, 2024)
-df['client_event_time'] = pd.to_datetime(df['client_event_time'])
-start_date = '2024-04-14'
-end_date = '2024-11-07'
+**How to Optimize Session Management:**  
+- **Investigate whether long late-night sessions are real engagement or passive activity.**  
+- **Introduce session timeouts or idle detection** to improve platform efficiency.  
+- Optimize platform performance **for actual peak user activity rather than background processes**.  
+""")
 
-filtered_df_2024 = df[(df['client_event_time'] >= start_date) & (df['client_event_time'] <= end_date)]
+st.header("Interaction Behavior: Short vs. Long Sessions")
+st.image("sessevents.png", caption="Event Distribution in Short vs. Long Sessions")
+st.write("""
+**Insight:**  
+- **Short sessions are dominated by UI rendering & navigation**, with users checking dashboards but not engaging deeply.  
+- **Long sessions (3+ hours) also lack strong interaction events**, meaning users are either:
+  - **Leaving tabs open without active usage**  
+  - **Navigating inefficiently to complete tasks**  
+  - **Reviewing data without making edits, updates, or transactions**  
+- **Few users engage in meaningful actions (e.g., form submissions, data entry, transactions), regardless of session length.**  
 
+**How to Improve Engagement:**  
+- **Introduce engagement nudges** (e.g., “Need help finding something?”).  
+- **Optimize workflows** to reduce unnecessary navigation and improve task efficiency.  
+- **Detect idle sessions** and prompt users with **actionable next steps (e.g., "Complete your task now")**.  
+- **Analyze long-session behaviors** to determine if they are real engagement or passive/automated activity.  
+""")
 
-users_id_list = filtered_df_2024['user_id'].unique()
+st.header("User Retention & Drop-Off Analysis")
+st.image("droppeng.png", caption="Top 10 Users with Largest Drop-Off in Engagement")
+st.write("""
+**Insight:**  
+- Many users **significantly reduced their activity in 2025**, indicating lower retention.  
+- Example: **User '61a2808e-1f12-4e32-b1be-7a62225ade2f' had 5,841 events in 2024 but 0 in 2025**, showing complete disengagement.  
+- Drop-offs may be related to **workflow inefficiencies, frustration with session experiences, or changing business needs**.
 
-user_row_count = {}
+**How to Improve Retention:**  
+- **Investigate session performance issues** to reduce potential UX bottlenecks.  
+- **Track user frustration signals (e.g., increasing session_end usage)** as early warnings of disengagement.  
+- **Engage at-risk users before they drop off**, using proactive outreach, recommendations, or UI nudges.  
+- **Improve onboarding & user education**, especially for those switching business units.  
+""")
 
-# Iterate over each user_id to count events in both years
-for user_id in users_id_list:
-    # Get the count of rows for the user_id in filtered 2024 and 2025 data
-    count_2024 = filtered_df_2024[filtered_df_2024['user_id'] == user_id].shape[0]
-    count_2025 = df[combined_df_2025['user_id'] == user_id].shape[0]
-    
-    # Store the row counts for each user
-    user_row_count[user_id] = {'user_id': user_id, '2024': count_2024, '2025': count_2025}
+st.header("Stickiness & User Retention Over 28 Days")
 
-row_count_df = pd.DataFrame.from_dict(user_row_count, orient='index')
+# Total Time Spent Per Day
+st.header("Total Time Spent Per Day (Days 11 to 28)")
+st.image("timeperday.png", caption="Total Time Spent Per Day (Days 11-28)")
+st.write("""
+**Insight:**  
+- Time spent is generally **low and stable** until **a massive spike around Day 26**.  
+- Smaller fluctuations around **Days 14-16** suggest periodic bursts of engagement.  
+- The **spike at Day 26** is likely an **outlier or an external trigger (e.g., event, update, or bot activity).**  
 
-filtered_users = row_count_df[(row_count_df['2025'] + 50) <= row_count_df['2024']]
+**Possible Causes:**  
+- Users **spend limited time daily** but occasionally **engage deeply** on certain days.  
+- The **Day 26 spike may be due to abnormal session durations, automated scripts, or a one-time event.**  
 
-userids_dropoffs = filtered_users['user_id'].unique()
+**Next Steps to Improve Engagement:**  
+- Investigate **why engagement spiked at Day 26** (real user activity vs. technical artifact).  
+- Encourage **consistent engagement patterns** rather than one-time deep usage.  
+- Use **interactive features** (recommendations, tasks, notifications) to sustain user interaction.
+""")
+# Return User Analysis
+st.header("Return User Analysis")
+st.image("returnuseranal.png", caption="Return User Analysis: Returning vs. Non-Returning Users")
+st.write("""
+**Insight:**  
+- A **large portion of users return** (orange bars), but there is also a significant number of **one-time users (blue bars).**  
+- A **few users return at extremely high frequencies**, while most return occasionally.  
+- **Wide variation in return rates** suggests different user segments:  
+  - **Highly engaged users** (frequent returns).  
+  - **Casual users** (occasional returns).  
+  - **One-time visitors** (do not return).  
 
-filtered_users['difference'] = row_count_df.loc[filtered_users.index, '2024'] - row_count_df.loc[filtered_users.index, '2025']
+**Possible Causes:**  
+- Some users may be **exploring the platform briefly before dropping off.**  
+- Frequent returners may be **power users, admins, or users with complex workflows.**  
+- Non-returners may have **faced usability issues or not found enough value.**  
 
-st.header("4. User Drop-offs Between 2024 and 2025")
-st.write(f"Number of drop-off users between 2024 and 2025: {len(filtered_users)}")
-
-dropoff_users_df_2024 = filtered_df_2024[filtered_df_2024['user_id'].isin(filtered_users['user_id'])]
-dropoff_users_df_2025 = combined_df_2025[combined_df_2025['user_id'].isin(filtered_users['user_id'])]
-
-st.subheader("User Drop-off Analysis")
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.histplot(dropoff_users_df_2024['client_event_time'], kde=True, label='2024', color='blue', ax=ax)
-sns.histplot(dropoff_users_df_2025['client_event_time'], kde=True, label='2025', color='red', ax=ax)
-ax.set_title('Event Time Distribution for Drop-off Users (2024 vs. 2025)')
-ax.set_xlabel('Event Time')
-ax.set_ylabel('Frequency')
-plt.legend()
-st.pyplot(fig)
-
-
-# Section 5: Return Rate Analysis Over 28 Days
-# Ensure 'client_upload_time' and 'client_event_time' are in datetime format
-df['client_upload_time'] = pd.to_datetime(df['client_upload_time'], errors='coerce')
-df['client_event_time'] = pd.to_datetime(df['client_event_time'], errors='coerce')
-if 'time_difference_minutes' not in df.columns:
-    # Assuming 'client_event_time' and 'client_upload_time' are already datetime objects
-    df['time_difference'] = df['client_upload_time'] - df['client_event_time']
-    df['time_difference_minutes'] = df['time_difference'].dt.total_seconds() / 60
-
-st.header("5. Return Rate Analysis Over 28 Days")
-
-# Filter the 2024 data for the first period
-start_date = pd.to_datetime('2024-04-14')
-end_date = pd.to_datetime('2024-05-12')
-first_period_2024 = df[(df['client_event_time'] >= start_date) & (df['client_event_time'] <= end_date)]
-
-# Calculate total time spent per day
-total_time_spent_per_day = []
-for i in range((end_date - start_date).days + 1):  # 28 days
-    filtered_data = first_period_2024[(first_period_2024['client_event_time'].dt.date == (start_date + pd.Timedelta(days=i)).date())]
-    total_time = filtered_data['time_difference_minutes'].sum()
-    total_time_spent_per_day.append(total_time)
-
-# Print total time spent per day
-for date, time_spent in zip(pd.date_range(start=start_date, end=end_date), total_time_spent_per_day):
-    print(f"Date: {date.date()}, Total Time Spent: {time_spent} minutes")
-
-# Add this information to the analysis
-first_period_2024['timestamp'] = pd.to_datetime(first_period_2024['client_event_time'])
-first_period_2024 = first_period_2024.sort_values(by=['user_id', 'client_event_time'])
-first_period_2024['time_diff'] = first_period_2024.groupby('user_id')['client_event_time'].diff()
-return_threshold = pd.Timedelta(days=1)
-first_period_2024['is_return'] = first_period_2024['time_diff'].apply(lambda x: x <= return_threshold if pd.notnull(x) else False)
-
-# Plot return rate over time
-st.subheader("Return Rate Over Time")
-cohort_analysis = first_period_2024.groupby('timestamp')['is_return'].mean().reset_index()
-
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.lineplot(data=cohort_analysis, x='timestamp', y='is_return', ax=ax, marker='o')
-ax.set_title('User Return Rate Over 28 Days')
-ax.set_xlabel('Day')
-ax.set_ylabel('Return Rate')
-plt.grid(True)
-st.pyplot(fig)
+**Next Steps to Improve Retention:**  
+- Identify **top returners** and analyze their behaviors to **replicate their engagement patterns**.  
+- Investigate why **one-time users drop off** (feedback surveys, exit interviews).  
+- Offer **personalized re-engagement strategies** (reminders, tutorials, targeted content) to casual users.  
+""")
 
 
+# User Return Rate Over 28 Days
+st.header("User Return Rate Over 28 Days")
+st.image("usrreturn28.png", caption="User Return Rate Over 28 Days")
+st.write("""
+**Insight:**  
+- **Return rate remains high early on (~95-100%) but drops significantly around Day 20.**  
+- A **steep decline between Days 20-23** suggests many users disengage at this point.  
+- The **spike at the end** suggests a possible **data anomaly** or a sudden event that brought users back.  
+
+**Possible Causes:**  
+- Users may **complete their primary tasks within the first 20 days**, leading to lower return rates after.  
+- **Lack of engagement triggers (e.g., reminders, follow-ups)** may cause users to drop off.  
+- A **sudden return spike** could indicate **a campaign, update, or forced login event.**  
+
+**Next Steps to Improve Stickiness:**  
+- Implement **re-engagement strategies** around **Days 15-20** (emails, notifications, reminders).  
+- Analyze what **caused the return spike at the end** to replicate that effect.  
+- Encourage **long-term usage patterns** by introducing **continuous engagement features**.
+""")
 
