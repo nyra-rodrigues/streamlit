@@ -71,16 +71,42 @@ plt.xticks(rotation=45)
 st.pyplot(fig)
 
 # Section 4: User Drop-offs Between 2024 and 2025
-st.header("4. User Drop-offs Between 2024 and 2025")
+# Step 1: Filter 2024 dataset to be over 207 days, from the earliest time (April 14, 2024)
+df['client_event_time'] = pd.to_datetime(df['client_event_time'])
+start_date = '2024-04-14'
+end_date = '2024-11-07'
 
-# Filter users with drop-offs
+filtered_df_2024 = df[(df['client_event_time'] >= start_date) & (df['client_event_time'] <= end_date)]
+
+
+users_id_list = filtered_df_2024['user_id'].unique()
+
+user_row_count = {}
+
+# Iterate over each user_id to count events in both years
+for user_id in users_id_list:
+    # Get the count of rows for the user_id in filtered 2024 and 2025 data
+    count_2024 = filtered_df_2024[filtered_df_2024['user_id'] == user_id].shape[0]
+    count_2025 = df[combined_df_2025['user_id'] == user_id].shape[0]
+    
+    # Store the row counts for each user
+    user_row_count[user_id] = {'user_id': user_id, '2024': count_2024, '2025': count_2025}
+
+row_count_df = pd.DataFrame.from_dict(user_row_count, orient='index')
+
 filtered_users = row_count_df[(row_count_df['2025'] + 50) <= row_count_df['2024']]
+
+userids_dropoffs = filtered_users['user_id'].unique()
+
+filtered_users['difference'] = row_count_df.loc[filtered_users.index, '2024'] - row_count_df.loc[filtered_users.index, '2025']
+
+st.header("4. User Drop-offs Between 2024 and 2025")
+st.write(f"Number of drop-off users between 2024 and 2025: {len(filtered_users)}")
+
 dropoff_users_df_2024 = filtered_df_2024[filtered_df_2024['user_id'].isin(filtered_users['user_id'])]
 dropoff_users_df_2025 = combined_df_2025[combined_df_2025['user_id'].isin(filtered_users['user_id'])]
 
-# Plot drop-off analysis
 st.subheader("User Drop-off Analysis")
-st.write(f"Number of drop-off users between 2024 and 2025: {len(filtered_users)}")
 fig, ax = plt.subplots(figsize=(10, 6))
 sns.histplot(dropoff_users_df_2024['client_event_time'], kde=True, label='2024', color='blue', ax=ax)
 sns.histplot(dropoff_users_df_2025['client_event_time'], kde=True, label='2025', color='red', ax=ax)
@@ -90,19 +116,45 @@ ax.set_ylabel('Frequency')
 plt.legend()
 st.pyplot(fig)
 
-# Section 5: Return Rate Analysis
+
+# Section 5: Return Rate Analysis Over 28 Days
+# Ensure 'client_upload_time' and 'client_event_time' are in datetime format
+df['client_upload_time'] = pd.to_datetime(df['client_upload_time'], errors='coerce')
+df['client_event_time'] = pd.to_datetime(df['client_event_time'], errors='coerce')
+if 'time_difference_minutes' not in df.columns:
+    # Assuming 'client_event_time' and 'client_upload_time' are already datetime objects
+    df['time_difference'] = df['client_upload_time'] - df['client_event_time']
+    df['time_difference_minutes'] = df['time_difference'].dt.total_seconds() / 60
+
 st.header("5. Return Rate Analysis Over 28 Days")
 
-# Calculate return rate
+# Filter the 2024 data for the first period
+start_date = pd.to_datetime('2024-04-14')
+end_date = pd.to_datetime('2024-05-12')
+first_period_2024 = df[(df['client_event_time'] >= start_date) & (df['client_event_time'] <= end_date)]
+
+# Calculate total time spent per day
+total_time_spent_per_day = []
+for i in range((end_date - start_date).days + 1):  # 28 days
+    filtered_data = first_period_2024[(first_period_2024['client_event_time'].dt.date == (start_date + pd.Timedelta(days=i)).date())]
+    total_time = filtered_data['time_difference_minutes'].sum()
+    total_time_spent_per_day.append(total_time)
+
+# Print total time spent per day
+for date, time_spent in zip(pd.date_range(start=start_date, end=end_date), total_time_spent_per_day):
+    print(f"Date: {date.date()}, Total Time Spent: {time_spent} minutes")
+
+# Add this information to the analysis
 first_period_2024['timestamp'] = pd.to_datetime(first_period_2024['client_event_time'])
 first_period_2024 = first_period_2024.sort_values(by=['user_id', 'client_event_time'])
 first_period_2024['time_diff'] = first_period_2024.groupby('user_id')['client_event_time'].diff()
 return_threshold = pd.Timedelta(days=1)
 first_period_2024['is_return'] = first_period_2024['time_diff'].apply(lambda x: x <= return_threshold if pd.notnull(x) else False)
 
-# Plot return rate
+# Plot return rate over time
 st.subheader("Return Rate Over Time")
 cohort_analysis = first_period_2024.groupby('timestamp')['is_return'].mean().reset_index()
+
 fig, ax = plt.subplots(figsize=(10, 6))
 sns.lineplot(data=cohort_analysis, x='timestamp', y='is_return', ax=ax, marker='o')
 ax.set_title('User Return Rate Over 28 Days')
@@ -111,11 +163,5 @@ ax.set_ylabel('Return Rate')
 plt.grid(True)
 st.pyplot(fig)
 
-# Add interactive widgets for user input (optional)
-st.sidebar.header('Filters')
-selected_role = st.sidebar.selectbox('Select Role', roles.index)
-filtered_by_role = combined_df_2025[combined_df_2025['roles'].apply(lambda x: selected_role in x)]
 
-st.write(f"Showing data for role: {selected_role}")
-st.write(filtered_by_role)
 
