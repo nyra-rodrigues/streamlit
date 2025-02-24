@@ -1,151 +1,121 @@
 import streamlit as st
 import pandas as pd
-import math
-from pathlib import Path
+import matplotlib.pyplot as plt
+import seaborn as sns
+import ast
 
-# Set the title and favicon that appear in the Browser's tab bar.
-st.set_page_config(
-    page_title='GDP dashboard',
-    page_icon=':earth_americas:', # This is an emoji shortcode. Could be a URL too.
-)
+# Load your dataset (ensure it's preloaded in your session, or load it dynamically)
+# Example: 
+combined_df_2025 = pd.read_csv('amplitude_export_chunk_1_anonymized_subchunk_200000_300000.csv')
+df = pd.read_csv('amplitude_export_chunk_1_anonymized_subchunk_200000_300000.csv')
 
-# -----------------------------------------------------------------------------
-# Declare some useful functions.
+# Streamlit Dashboard Title
+st.title('User Behavior and Session Analysis Dashboard')
 
-@st.cache_data
-def get_gdp_data():
-    """Grab GDP data from a CSV file.
+# Section 1: Role Distribution
+st.header("1. Role Distribution")
+combined_df_2025['user_properties'] = combined_df_2025['user_properties'].apply(lambda x: ast.literal_eval(x))
+combined_df_2025['roles'] = combined_df_2025['user_properties'].apply(lambda x: x.get('roles', []))
+roles = combined_df_2025['roles'].explode().value_counts()
 
-    This uses caching to avoid having to read the file every time. If we were
-    reading from an HTTP endpoint instead of a file, it's a good idea to set
-    a maximum age to the cache with the TTL argument: @st.cache_data(ttl='1d')
-    """
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.barplot(x=roles.index, y=roles.values, ax=ax)
+ax.set_title("Role Distribution")
+ax.set_xlabel("Role")
+ax.set_ylabel("Count")
+plt.xticks(rotation=90)
+st.pyplot(fig)
 
-    # Instead of a CSV on disk, you could read from an HTTP endpoint here too.
-    DATA_FILENAME = Path(__file__).parent/'data/gdp_data.csv'
-    raw_gdp_df = pd.read_csv(DATA_FILENAME)
+# Section 2: Session Length Analysis
+st.header("2. Session Length Analysis")
+df['server_received_time'] = pd.to_datetime(df['server_received_time'], errors='coerce')
+df_sessions = df.groupby('session_id')['server_received_time'].agg(['min', 'max'])
+df_sessions['session_length'] = (df_sessions['max'] - df_sessions['min']).dt.total_seconds()
+df = df.merge(df_sessions[['session_length']], left_on='session_id', right_index=True)
 
-    MIN_YEAR = 1960
-    MAX_YEAR = 2022
+st.subheader("Average Session Length")
+avg_registered = df[df['user_id'] != 'EMPTY']['session_length'].mean()
+avg_guest = df[df['user_id'] == 'EMPTY']['session_length'].mean()
 
-    # The data above has columns like:
-    # - Country Name
-    # - Country Code
-    # - [Stuff I don't care about]
-    # - GDP for 1960
-    # - GDP for 1961
-    # - GDP for 1962
-    # - ...
-    # - GDP for 2022
-    #
-    # ...but I want this instead:
-    # - Country Name
-    # - Country Code
-    # - Year
-    # - GDP
-    #
-    # So let's pivot all those year-columns into two: Year and GDP
-    gdp_df = raw_gdp_df.melt(
-        ['Country Code'],
-        [str(x) for x in range(MIN_YEAR, MAX_YEAR + 1)],
-        'Year',
-        'GDP',
-    )
+st.write(f"Average session length (registered users): {avg_registered:.2f} seconds")
+st.write(f"Average session length (guest users): {avg_guest:.2f} seconds")
 
-    # Convert years from string to integers
-    gdp_df['Year'] = pd.to_numeric(gdp_df['Year'])
+# Plot session length distribution
+fig, ax = plt.subplots(figsize=(10, 6))
+df_sessions.groupby(df_sessions.index)['session_length'].mean().sort_values(ascending=True).head(10).plot(kind='bar', ax=ax)
+ax.set_title("Top 10 Session Lengths")
+ax.set_xlabel("Session ID")
+ax.set_ylabel("Session Length (Seconds)")
+st.pyplot(fig)
 
-    return gdp_df
+# Section 3: Time Difference Between Event and Upload
+st.header("3. Time Difference Between Event and Upload")
 
-gdp_df = get_gdp_data()
+# Calculate time difference
+combined_df_2025['client_event_time'] = pd.to_datetime(combined_df_2025['client_event_time'])
+combined_df_2025['client_upload_time'] = pd.to_datetime(combined_df_2025['client_upload_time'])
+combined_df_2025['time_difference'] = combined_df_2025['client_upload_time'] - combined_df_2025['client_event_time']
+combined_df_2025['time_difference_minutes'] = combined_df_2025['time_difference'].dt.total_seconds() / 60
 
-# -----------------------------------------------------------------------------
-# Draw the actual page
+st.subheader("Time Difference Summary")
+st.write(combined_df_2025['time_difference_minutes'].describe())
 
-# Set the title that appears at the top of the page.
-'''
-# :earth_americas: GDP dashboard
+# Filter and visualize upload times > 10 days
+filtered_df_2025 = combined_df_2025[combined_df_2025['time_difference_minutes'] > 14400]
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.countplot(x='country', data=filtered_df_2025, ax=ax)
+ax.set_xlabel('Countries with Upload Time > 10 Days')
+ax.set_ylabel('Frequency')
+ax.set_title('Country Distribution of Upload Time > 10 Days')
+plt.xticks(rotation=45)
+st.pyplot(fig)
 
-Browse GDP data from the [World Bank Open Data](https://data.worldbank.org/) website. As you'll
-notice, the data only goes to 2022 right now, and datapoints for certain years are often missing.
-But it's otherwise a great (and did I mention _free_?) source of data.
-'''
+# Section 4: User Drop-offs Between 2024 and 2025
+st.header("4. User Drop-offs Between 2024 and 2025")
 
-# Add some spacing
-''
-''
+# Filter users with drop-offs
+filtered_users = row_count_df[(row_count_df['2025'] + 50) <= row_count_df['2024']]
+dropoff_users_df_2024 = filtered_df_2024[filtered_df_2024['user_id'].isin(filtered_users['user_id'])]
+dropoff_users_df_2025 = combined_df_2025[combined_df_2025['user_id'].isin(filtered_users['user_id'])]
 
-min_value = gdp_df['Year'].min()
-max_value = gdp_df['Year'].max()
+# Plot drop-off analysis
+st.subheader("User Drop-off Analysis")
+st.write(f"Number of drop-off users between 2024 and 2025: {len(filtered_users)}")
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.histplot(dropoff_users_df_2024['client_event_time'], kde=True, label='2024', color='blue', ax=ax)
+sns.histplot(dropoff_users_df_2025['client_event_time'], kde=True, label='2025', color='red', ax=ax)
+ax.set_title('Event Time Distribution for Drop-off Users (2024 vs. 2025)')
+ax.set_xlabel('Event Time')
+ax.set_ylabel('Frequency')
+plt.legend()
+st.pyplot(fig)
 
-from_year, to_year = st.slider(
-    'Which years are you interested in?',
-    min_value=min_value,
-    max_value=max_value,
-    value=[min_value, max_value])
+# Section 5: Return Rate Analysis
+st.header("5. Return Rate Analysis Over 28 Days")
 
-countries = gdp_df['Country Code'].unique()
+# Calculate return rate
+first_period_2024['timestamp'] = pd.to_datetime(first_period_2024['client_event_time'])
+first_period_2024 = first_period_2024.sort_values(by=['user_id', 'client_event_time'])
+first_period_2024['time_diff'] = first_period_2024.groupby('user_id')['client_event_time'].diff()
+return_threshold = pd.Timedelta(days=1)
+first_period_2024['is_return'] = first_period_2024['time_diff'].apply(lambda x: x <= return_threshold if pd.notnull(x) else False)
 
-if not len(countries):
-    st.warning("Select at least one country")
+# Plot return rate
+st.subheader("Return Rate Over Time")
+cohort_analysis = first_period_2024.groupby('timestamp')['is_return'].mean().reset_index()
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.lineplot(data=cohort_analysis, x='timestamp', y='is_return', ax=ax, marker='o')
+ax.set_title('User Return Rate Over 28 Days')
+ax.set_xlabel('Day')
+ax.set_ylabel('Return Rate')
+plt.grid(True)
+st.pyplot(fig)
 
-selected_countries = st.multiselect(
-    'Which countries would you like to view?',
-    countries,
-    ['DEU', 'FRA', 'GBR', 'BRA', 'MEX', 'JPN'])
+# Add interactive widgets for user input (optional)
+st.sidebar.header('Filters')
+selected_role = st.sidebar.selectbox('Select Role', roles.index)
+filtered_by_role = combined_df_2025[combined_df_2025['roles'].apply(lambda x: selected_role in x)]
 
-''
-''
-''
+st.write(f"Showing data for role: {selected_role}")
+st.write(filtered_by_role)
 
-# Filter the data
-filtered_gdp_df = gdp_df[
-    (gdp_df['Country Code'].isin(selected_countries))
-    & (gdp_df['Year'] <= to_year)
-    & (from_year <= gdp_df['Year'])
-]
-
-st.header('GDP over time', divider='gray')
-
-''
-
-st.line_chart(
-    filtered_gdp_df,
-    x='Year',
-    y='GDP',
-    color='Country Code',
-)
-
-''
-''
-
-
-first_year = gdp_df[gdp_df['Year'] == from_year]
-last_year = gdp_df[gdp_df['Year'] == to_year]
-
-st.header(f'GDP in {to_year}', divider='gray')
-
-''
-
-cols = st.columns(4)
-
-for i, country in enumerate(selected_countries):
-    col = cols[i % len(cols)]
-
-    with col:
-        first_gdp = first_year[first_year['Country Code'] == country]['GDP'].iat[0] / 1000000000
-        last_gdp = last_year[last_year['Country Code'] == country]['GDP'].iat[0] / 1000000000
-
-        if math.isnan(first_gdp):
-            growth = 'n/a'
-            delta_color = 'off'
-        else:
-            growth = f'{last_gdp / first_gdp:,.2f}x'
-            delta_color = 'normal'
-
-        st.metric(
-            label=f'{country} GDP',
-            value=f'{last_gdp:,.0f}B',
-            delta=growth,
-            delta_color=delta_color
-        )
