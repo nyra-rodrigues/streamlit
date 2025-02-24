@@ -1,8 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import ast
 
 st.header("Regional Distribution 2024")
 st.image("r2024.png", caption="User Activity by Region in 2024")
