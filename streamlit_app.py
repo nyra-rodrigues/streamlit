@@ -2,23 +2,24 @@ import streamlit as st
 import pandas as pd
 
 st.header("Regional Distribution 2024")
-st.image("r2024.png", caption="User Activity by Region in 2024")
+st.image("./graphs/r2024.png", caption="User Activity by Region in 2024")
+
 st.header("Regional Distribution 2025")
-st.image("regiondistr.png", caption="User Activity by Region in 2025")
+st.image("./graphs/regiondistr.png", caption="User Activity by Region in 2025")
 st.write("**Insight:** Maharashtra has surpassed Tennessee in user activity, and new regions like Iowa and Georgia are gaining prominence. This shift suggests evolving engagement patterns across different geographic areas.")
 
 st.header("Country Distribution (2025)")
-st.image("c2025.png", caption="User Activity by Country in 2025")
+st.image("./graphs/c2025.png", caption="User Activity by Country in 2025")
 st.write("**Insight:** The platform remains heavily dominated by users from the **United States and India**, with **Poland seeing a significant increase in activity**. Engagement strategies should prioritize these regions to maximize retention.")
 
 st.header("City Distribution (2025)")
-st.image("ci2025.png", caption="User Activity by City in 2025")
+st.image("./graphs/ci2025.png", caption="User Activity by City in 2025")
 st.write("**Insight:** **Mumbai and Nashville** remain dominant, with increasing activity in cities like **Spring Hill and Wroclaw**. Targeted engagement strategies in these cities could improve retention and daily usage.")
 
 st.header("User Role Distribution (2024)")
-st.image("roledistr2024.png", caption="Role-based Engagement Trends in 2025")
+st.image("./graphs/roledistr2024.png", caption="Role-based Engagement Trends in 2025")
 st.header("User Role Distribution (2025)")
-st.image("roledistr2025.png", caption="Role-based Engagement Trends in 2025")
+st.image("./graphs/roledistr2025.png", caption="Role-based Engagement Trends in 2025")
 st.write("""
 **Insight:**  
 - **Underwriters dominate the platform.** Ensuring that platform tools are optimized for their workflow can **improve daily retention**.  
@@ -28,9 +29,9 @@ st.write("""
 """)
 
 st.header("User Engagement: Session Length Analysis")
-st.image("sessionlen.png", caption="Guest vs. Registered User Session Length")
+st.image("./graphs/sessionlen.png", caption="Guest vs. Registered User Session Length")
 st.write("""
-📌 **Insight:**  
+**Insight:**  
 - **Guest users spend ~44% less time on the platform** than registered users.  
 - This suggests **friction in engagement**, possibly due to:
   - **Lack of onboarding**
@@ -44,7 +45,7 @@ st.write("""
 """)
 
 st.header("User Drop-offs: Session Length Distribution")
-st.image("dropoffdistr.png", caption="Distribution of Session Lengths")
+st.image("./graphs/dropoffdistr.png", caption="Distribution of Session Lengths")
 st.write("""
 **Insight:**  
 - A large portion of users **drop off within the first 30 seconds of their session**.  
@@ -62,7 +63,7 @@ st.write("""
 """)
 
 st.header("Peak User Activity: Events Per Hour")
-st.image("perhr.png", caption="User Engagement by Hour")
+st.image("./graphs/perhr.png", caption="User Engagement by Hour")
 st.write("""
 **Insight:**  
 - **Peak engagement occurs around 8 PM**, when most events are recorded.  
@@ -76,7 +77,7 @@ st.write("""
 """)
 
 st.header("User Engagement by Day of the Week")
-st.image("perweek.png", caption="Platform Activity by Day")
+st.image("./graphs/perweek.png", caption="Platform Activity by Day")
 st.write("""
 **Insight:**  
 - **Tuesday is the peak engagement day**, making it the best time for **feature rollouts, marketing campaigns, and major platform updates**.  
@@ -90,7 +91,7 @@ st.write("""
 """)
 
 st.header("Session Duration Patterns: Active vs Passive Engagement")
-st.image("avgsessperhr.png", caption="Session Length Trends Throughout the Day")
+st.image("./graphs/avgsessperhr.png", caption="Session Length Trends Throughout the Day")
 st.write("""
 **Insight:**  
 - **Late-night and early-morning session spikes (4 AM, 10-11 PM) suggest passive or automated activity.**  
@@ -106,7 +107,7 @@ st.write("""
 """)
 
 st.header("Interaction Behavior: Short vs. Long Sessions")
-st.image("sessevents.png", caption="Event Distribution in Short vs. Long Sessions")
+st.image("./graphs/sessevents.png", caption="Event Distribution in Short vs. Long Sessions")
 st.write("""
 **Insight:**  
 - **Short sessions are dominated by UI rendering & navigation**, with users checking dashboards but not engaging deeply.  
@@ -124,7 +125,7 @@ st.write("""
 """)
 
 st.header("User Retention & Drop-Off Analysis")
-st.image("droppeng.png", caption="Top 10 Users with Largest Drop-Off in Engagement")
+st.image("./graphs/droppeng.png", caption="Top 10 Users with Largest Drop-Off in Engagement")
 st.write("""
 **Insight:**  
 - Many users **significantly reduced their activity in 2025**, indicating lower retention.  
@@ -142,7 +143,7 @@ st.header("Stickiness & User Retention Over 28 Days")
 
 # Total Time Spent Per Day
 st.header("Total Time Spent Per Day (Days 11 to 28)")
-st.image("timeperday.png", caption="Total Time Spent Per Day (Days 11-28)")
+st.image("./graphs/timeperday.png", caption="Total Time Spent Per Day (Days 11-28)")
 st.write("""
 **Insight:**  
 - Time spent is generally **low and stable** until **a massive spike around Day 26**.  
@@ -160,7 +161,7 @@ st.write("""
 """)
 # Return User Analysis
 st.header("Return User Analysis")
-st.image("returnuseranal.png", caption="Return User Analysis: Returning vs. Non-Returning Users")
+st.image("./graphs/returnuseranal.png", caption="Return User Analysis: Returning vs. Non-Returning Users")
 st.write("""
 **Insight:**  
 - A **large portion of users return** (orange bars), but there is also a significant number of **one-time users (blue bars).**  
@@ -184,7 +185,7 @@ st.write("""
 
 # User Return Rate Over 28 Days
 st.header("User Return Rate Over 28 Days")
-st.image("usrreturn28.png", caption="User Return Rate Over 28 Days")
+st.image("./graphs/usrreturn28.png", caption="User Return Rate Over 28 Days")
 st.write("""
 **Insight:**  
 - **Return rate remains high early on (~95-100%) but drops significantly around Day 20.**  
@@ -201,4 +202,3 @@ st.write("""
 - Analyze what **caused the return spike at the end** to replicate that effect.  
 - Encourage **long-term usage patterns** by introducing **continuous engagement features**.
 """)
-
